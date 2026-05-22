@@ -1,0 +1,3 @@
+# Keep the output dir tracked but ignore the project subdirs and cache
+*
+!.gitignore

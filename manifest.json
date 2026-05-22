@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-latex-live",
+  "name": "LaTeX Live",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "LuaLaTeX compile + realtime PDF preview + bidirectional SyncTeX inside Obsidian",
+  "author": "vinhbui720",
+  "authorUrl": "https://github.com/vinhbui720",
+  "isDesktopOnly": true
+}

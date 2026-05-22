@@ -1,0 +1,26 @@
+{
+  "name": "obsidian-latex-live",
+  "version": "0.1.0",
+  "description": "LaTeX live preview plugin for Obsidian",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "install-vault": "bash scripts/install-to-vault.sh"
+  },
+  "keywords": [
+    "obsidian",
+    "latex",
+    "lualatex"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.43.0",
+    "@types/node": "^20.0.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.20.0",
+    "obsidian": "latest",
+    "typescript": "^5.0.0"
+  }
+}
