@@ -53,6 +53,11 @@ export default class LatexLivePlugin extends Plugin {
   async onload(): Promise<void> {
     await this.loadSettings();
 
+    // Register .tex as a viewable file extension so it shows up in the file
+    // explorer and opens with the markdown editor (CodeMirror). Without this,
+    // Obsidian hides unknown extensions entirely.
+    this.registerExtensions(["tex"], "markdown");
+
     this.compiler = new LatexCompiler(this.settings);
     this.syncTex = new SyncTexParser(this.settings.synctexPath);
     this.server = new PreviewServer(this.settings.serverHost, VIEWER_HTML);
