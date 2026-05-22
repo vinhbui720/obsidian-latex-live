@@ -85,3 +85,35 @@
   opacity: 0.8;
   margin-left: 1ch;
 }
+
+/* Completion suggestions */
+.latex-suggest {
+  padding: 4px 8px;
+}
+.latex-suggest-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.latex-suggest-label {
+  font-family: var(--font-monospace);
+  font-size: 13px;
+  color: var(--text-normal);
+}
+.latex-suggest-cat {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+}
+.latex-suggest-cat-command     { background: rgba(100,180,255,0.18); color: #6cb4ff; }
+.latex-suggest-cat-environment { background: rgba(180,120,255,0.18); color: #b478ff; }
+.latex-suggest-cat-math        { background: rgba(255,180,80,0.18);  color: #ffb450; }
+.latex-suggest-cat-structure   { background: rgba(120,220,140,0.18); color: #78dc8c; }
+.latex-suggest-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}

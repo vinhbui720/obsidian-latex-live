@@ -24,6 +24,7 @@ import {
   createErrorPlugin,
 } from "./inlineError";
 import { LatexSettingTab } from "./settings";
+import { LatexCompletionProvider } from "./completions";
 import {
   PluginSettings,
   DEFAULT_SETTINGS,
@@ -142,6 +143,9 @@ export default class LatexLivePlugin extends Plugin {
         return view?.file?.path ?? null;
       }),
     ]);
+
+    // LaTeX command/snippet completion (triggers on `\`).
+    this.registerEditorSuggest(new LatexCompletionProvider(this.app));
   }
 
   async onunload(): Promise<void> {
