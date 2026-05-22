@@ -1,6 +1,7 @@
 // SyncTeX: bidirectional source ↔ PDF mapping via the `synctex` CLI.
 
 import { spawn } from "child_process";
+import * as path from "path";
 
 export interface SyncTexEditLocation {
   file: string;
@@ -21,36 +22,46 @@ export class SyncTexParser {
     this.cmd = cmd;
   }
 
-  /** PDF coords → source location ("synctex edit" target). */
+  /** PDF coords → source location (synctex's "edit" subcommand: reverse sync). */
   async pdfToSource(
     synctexPath: string,
     page: number,
     x: number,
     y: number,
   ): Promise<SyncTexEditLocation | null> {
-    const args = ["view", "-i", `${page}:${x}:${y}:${synctexPath}`];
-    const out = await this.run(args);
+    // synctex edit -o page:x:y:<pdf>  (it auto-finds the matching synctex.gz)
+    const pdfPath = synctexPath.replace(/\.synctex\.gz$/, ".pdf");
+    const args = ["edit", "-o", `${page}:${x}:${y}:${pdfPath}`];
+    const out = await this.run(args, path.dirname(synctexPath));
     if (!out) return null;
     return this.parseEdit(out);
   }
 
-  /** Source line → PDF coords. */
+  /** Source line → PDF coords (synctex's "view" subcommand: forward sync). */
   async sourceToPdf(
     synctexPath: string,
     texFile: string,
     line: number,
   ): Promise<SyncTexViewLocation | null> {
-    // synctex edit takes 1-indexed line.
-    const args = ["edit", "-o", `${line + 1}:0:${texFile}`, "-d", synctexPath];
-    const out = await this.run(args);
+    // synctex view requires the *output PDF* (not the .synctex.gz) and the
+    // input file path. Both are resolved relative to cwd.
+    const pdfPath = synctexPath.replace(/\.synctex\.gz$/, ".pdf");
+    const args = [
+      "view",
+      "-i",
+      `${line + 1}:0:${texFile}`,
+      "-o",
+      pdfPath,
+    ];
+    const out = await this.run(args, path.dirname(synctexPath));
     if (!out) return null;
     return this.parseView(out);
   }
 
-  private run(args: string[]): Promise<string> {
+  private run(args: string[], cwd?: string): Promise<string> {
     return new Promise((resolve) => {
       let buf = "";
-      const proc = spawn(this.cmd, args);
+      const proc = spawn(this.cmd, args, cwd ? { cwd } : {});
       proc.stdout.on("data", (d) => (buf += d.toString()));
       proc.stderr.on("data", (d) => (buf += d.toString()));
       proc.on("error", () => resolve(""));
