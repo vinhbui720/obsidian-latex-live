@@ -15,7 +15,7 @@ export class LatexSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Auto compile")
-      .setDesc("Recompile after each edit (debounced).")
+      .setDesc("Recompile automatically. See trigger setting below for when.")
       .addToggle((t) =>
         t.setValue(this.plugin.settings.autoCompile).onChange(async (v) => {
           this.plugin.settings.autoCompile = v;
@@ -24,8 +24,27 @@ export class LatexSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Compile trigger")
+      .setDesc(
+        "On save: only recompile when the file is written to disk " +
+          "(Ctrl+S / Obsidian autosave). Quiet, recommended. " +
+          "On change: recompile after every keystroke (debounced).",
+      )
+      .addDropdown((d) =>
+        d
+          .addOption("on-save", "On save (Ctrl+S / autosave)")
+          .addOption("on-change", "On change (every keystroke)")
+          .setValue(this.plugin.settings.compileTrigger)
+          .onChange(async (v) => {
+            this.plugin.settings.compileTrigger =
+              v === "on-change" ? "on-change" : "on-save";
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
       .setName("Debounce delay (ms)")
-      .setDesc("Wait this long after the last keystroke before compiling.")
+      .setDesc("Only used in 'on change' mode: wait this long after the last keystroke before compiling.")
       .addSlider((s) =>
         s
           .setLimits(200, 3000, 50)

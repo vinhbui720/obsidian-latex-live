@@ -114,15 +114,36 @@ export default class LatexLivePlugin extends Plugin {
       hotkeys: [{ modifiers: ["Mod", "Alt"], key: "J" }],
       callback: () => this.syncPdfToCursor(),
     });
+    this.addCommand({
+      id: "save-and-compile",
+      name: "Save and compile LaTeX",
+      // We intentionally do NOT bind Ctrl+S by default so we don't fight
+      // Obsidian's built-in save. Bind it manually if you want.
+      callback: () => this.saveAndCompile(),
+    });
 
-    // Auto compile on edit.
+    // Auto compile on edit OR on save, depending on settings.
     this.registerEvent(
       this.app.workspace.on("editor-change", (_editor, info) => {
         if (!(info instanceof MarkdownView)) return;
         const f = info.file;
         if (!f || f.extension !== "tex") return;
         if (!this.settings.autoCompile) return;
+        if (this.settings.compileTrigger !== "on-change") return;
         this.scheduleCompile(f);
+      }),
+    );
+    // Vault "modify" fires whenever a file is written to disk - this is what
+    // Ctrl+S triggers in Obsidian (which also autosaves on focus loss). Use it
+    // as the "on save" hook.
+    this.registerEvent(
+      this.app.vault.on("modify", (file) => {
+        if (!(file instanceof TFile)) return;
+        if (file.extension !== "tex") return;
+        if (!this.settings.autoCompile) return;
+        if (this.settings.compileTrigger !== "on-save") return;
+        // Small debounce so multiple rapid saves coalesce.
+        this.scheduleCompile(file, 150);
       }),
     );
 
@@ -170,13 +191,14 @@ export default class LatexLivePlugin extends Plugin {
     this.applyInlineErrors(this.lastResult);
   }
 
-  private scheduleCompile(file: TFile) {
+  private scheduleCompile(file: TFile, delayOverride?: number) {
     if (this.debounceTimer) clearTimeout(this.debounceTimer);
+    const delay = delayOverride ?? this.settings.debounceDelay;
     this.debounceTimer = setTimeout(() => {
       this.compileFile(file).catch((e) =>
         console.error("[latex-live] compile failed:", e),
       );
-    }, this.settings.debounceDelay);
+    }, delay);
   }
 
   private async compileActive(): Promise<void> {
@@ -185,6 +207,32 @@ export default class LatexLivePlugin extends Plugin {
     if (!f || f.extension !== "tex") {
       new Notice("LaTeX Live: open a .tex file first.");
       return;
+    }
+    await this.compileFile(f);
+  }
+
+  /** Explicit "save then compile" command: forces a vault save (so unsaved
+   *  in-memory edits are flushed) and then runs a compile. Useful if the user
+   *  has autosave disabled or wants to bind this to a hotkey. */
+  private async saveAndCompile(): Promise<void> {
+    const v = this.app.workspace.getActiveViewOfType(MarkdownView);
+    const f = v?.file;
+    if (!f || f.extension !== "tex") {
+      new Notice("LaTeX Live: open a .tex file first.");
+      return;
+    }
+    // Ask the editor to flush its buffer. Obsidian's MarkdownView has a
+    // private `save()` we can call; falling back to vault.modify() with
+    // current editor content keeps us API-stable.
+    try {
+      const maybeSave = (v as unknown as { save?: () => Promise<void> }).save;
+      if (typeof maybeSave === "function") {
+        await maybeSave.call(v);
+      } else {
+        await this.app.vault.modify(f, v!.editor.getValue());
+      }
+    } catch (e) {
+      console.warn("[latex-live] save failed:", e);
     }
     await this.compileFile(f);
   }

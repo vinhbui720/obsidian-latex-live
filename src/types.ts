@@ -26,7 +26,14 @@ export interface PluginSettings {
   synctexPath: string;          // default "synctex"
   extraLatexmkArgs: string;     // free-form extra args
   autoCompile: boolean;
-  debounceDelay: number;        // ms after last keystroke before triggering compile
+  /**
+   * Determines when an auto compile triggers.
+   *   "on-change" – debounced after each keystroke (original behavior).
+   *   "on-save"   – only when the file is written to disk (Ctrl+S / Obsidian
+   *                 autosave). Quieter, less wasted CPU.
+   */
+  compileTrigger: "on-change" | "on-save";
+  debounceDelay: number;        // ms after last keystroke (on-change mode)
 
   // UI
   showInlineErrors: boolean;
@@ -46,6 +53,7 @@ export const DEFAULT_SETTINGS: PluginSettings = {
   synctexPath: "synctex",
   extraLatexmkArgs: "",
   autoCompile: true,
+  compileTrigger: "on-save",
   debounceDelay: 800,
 
   showInlineErrors: true,
